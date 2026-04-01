@@ -139,6 +139,4 @@ Dev Staging Prod
 - Environment isolation
 - Real-world DevOps workflow
 
----
-
-## ⭐ Support
+-------
