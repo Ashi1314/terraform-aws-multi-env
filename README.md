@@ -1,18 +1,23 @@
+ Terraform AWS Multi-Environment
 
-# Terraform AWS Multi-Environment Setup
+## 📖 Overview
+This project demonstrates how to manage AWS infrastructure using Terraform for multiple environments:
 
-This project demonstrates how to provision and manage AWS infrastructure using Terraform across multiple environments (dev, staging, prod) using a modular and scalable approach.
+- Development (dev)
+- Staging
+- Production (prod)
+
+It follows best practices like modular design, reusable code, and environment isolation.
 
 ---
 
-## 🚀 Features
+## 🚀 Key Features
 
-- Multi-environment setup (dev, staging, prod)
+- Multi-environment support
 - Reusable Terraform modules
-- Environment-specific configurations using `.tfvars`
-- Remote state management (S3 + DynamoDB recommended)
-- Scalable and DRY (Don't Repeat Yourself) architecture
-- Easy CI/CD integration (GitHub Actions / Jenkins)
+- Clean folder structure
+- Remote state support (S3 + DynamoDB)
+- Scalable and production-ready design
 
 ---
 
@@ -20,20 +25,17 @@ This project demonstrates how to provision and manage AWS infrastructure using T
 
 terraform-aws-multi-env/
 
-├── modules/
-│   ├── ec2/
-│   ├── vpc/
-│   └── ...
+modules/                # Reusable modules (VPC, EC2, etc.)
 
-├── environments/
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
+environments/           # Environment-specific configs
+  ├── dev/
+  ├── staging/
+  └── prod/
 
-├── main.tf
-├── variables.tf
-├── outputs.tf
-└── backend.tf
+main.tf                 # Main configuration  
+variables.tf            # Input variables  
+outputs.tf              # Outputs  
+backend.tf              # Remote backend config  
 
 ---
 
@@ -45,35 +47,54 @@ terraform-aws-multi-env/
 
 ---
 
-## 🔧 Setup & Usage
+## 🔧 Setup Instructions
+
+### 1. Clone Repository
+
 
 git clone https://github.com/Ashi1314/terraform-aws-multi-env.git
+
 cd terraform-aws-multi-env
 
+
+### 2. Initialize Terraform
 terraform init
 
+
+### 3. Run for Dev Environment
 terraform plan -var-file=environments/dev/terraform.tfvars
 terraform apply -var-file=environments/dev/terraform.tfvars
 
+
 ---
 
-## 🔐 Remote State (Recommended)
+## 🌍 Multi-Environment Concept
 
-Example:
+- Each environment has its own `.tfvars` file  
+- Same modules are reused across all environments  
+- Ensures consistency and avoids duplication  
+
+---
+
+## 🔐 Remote State Setup (Recommended)
+
+Use S3 + DynamoDB:
 
 terraform {
-  backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "dev/terraform.tfstate"
-    region         = "ap-south-1"
-    dynamodb_table = "terraform-lock"
-  }
+backend "s3" {
+bucket = "my-terraform-state"
+key = "dev/terraform.tfstate"
+region = "ap-south-1"
+dynamodb_table = "terraform-lock"
 }
+}
+
 
 ---
 
 ## 🔄 CI/CD Integration
 
+Supported tools:
 - GitHub Actions
 - Jenkins
 - AWS CodePipeline
@@ -87,14 +108,37 @@ Workflow:
 
 ---
 
-## 📌 Use Cases
+## 📊 Architecture Diagram
+
+Developer
+↓
+Terraform
+↓
+| AWS Infrastructure |
+
+↓ ↓ ↓
+Dev Staging Prod
+
+
+
+---
+
+## 💡 Use Cases
 
 - Infrastructure automation
-- Multi-environment deployments
+- Multi-environment deployment
 - DevOps learning projects
+- Production-ready setups
+
+---
+
+## 🧠 Learning Outcomes
+
+- Terraform modules
+- State management
+- Environment isolation
+- Real-world DevOps workflow
 
 ---
 
 ## ⭐ Support
-
-If you like this project, give it a ⭐ on GitHub!
