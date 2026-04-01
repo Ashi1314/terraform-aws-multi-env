@@ -14,6 +14,11 @@ locals {
       bucket_count   = 1
       table_count    = 1
     }
+   stg = {
+      instance_count = 2
+      bucket_count   = 2
+      table_count    = 2
+    }
     prod = {
       instance_count = 3
       bucket_count   = 2
