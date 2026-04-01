@@ -1,142 +1,101 @@
- Terraform AWS Multi-Environment
+# Terraform Workspaces + Modules Practice
 
-## 📖 Overview
-This project demonstrates how to manage AWS infrastructure using Terraform for multiple environments:
+AWS infrastructure managed with Terraform **workspaces** and **modules**. Each workspace (dev/prod) creates a different set of resources from the same codebase.
 
-- Development (dev)
-- Staging
-- Production (prod)
+## Architecture
 
-It follows best practices like modular design, reusable code, and environment isolation.
+| Resource       | dev | prod |
+|----------------|-----|------|
+| EC2 Instances  | 2   | 3    |
+| S3 Buckets     | 1   | 2    |
+| DynamoDB Tables| 1   | 2    |
 
----
+All resource names are prefixed with the workspace name (e.g., `dev-terra-server-1`, `prod-terra-server-2`) to avoid naming conflicts.
 
-## 🚀 Key Features
+## Project Structure
 
-- Multi-environment support
-- Reusable Terraform modules
-- Clean folder structure
-- Remote state support (S3 + DynamoDB)
-- Scalable and production-ready design
+```
+.
+├── main.tf              # Workspace config map + module calls
+├── variables.tf         # Root variables (AMI, instance type, key path)
+├── outputs.tf           # Surfaces all module outputs
+├── providers.tf         # AWS provider (us-west-2)
+├── terraform.tf         # Required providers & version
+├── terra-automate-key.pub
+└── modules/
+    ├── ec2/             # Key pair, security group, EC2 instances
+    ├── s3/              # S3 buckets with public access block
+    └── dynamodb/        # DynamoDB tables (PAY_PER_REQUEST)
+```
 
----
+## How It Works
 
-## 📂 Project Structure
+A single `locals` map in `main.tf` drives the resource counts per workspace:
 
-terraform-aws-multi-env/
+```hcl
+locals {
+  env_config = {
+    dev  = { instance_count = 2, bucket_count = 1, table_count = 1 }
+    prod = { instance_count = 3, bucket_count = 2, table_count = 2 }
+  }
+  current = lookup(local.env_config, terraform.workspace, local.env_config["dev"])
+}
+```
 
-modules/                # Reusable modules (VPC, EC2, etc.)
+Each module receives its count from `local.current` and uses `count` on the resources. Adding a new environment (e.g., staging) only requires adding one more entry to the map.
 
-environments/           # Environment-specific configs
-  ├── dev/
-  ├── staging/
-  └── prod/
+## Prerequisites
 
-main.tf                 # Main configuration  
-variables.tf            # Input variables  
-outputs.tf              # Outputs  
-backend.tf              # Remote backend config  
+- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.5.0
+- AWS CLI configured with credentials (`aws configure`)
+- An SSH key pair (public key at `terra-automate-key.pub`)
 
----
+## Usage
 
-## ⚙️ Prerequisites
+### Initialize
 
-- Terraform (>= 1.x)
-- AWS CLI configured
-- AWS account with proper IAM permissions
-
----
-
-## 🔧 Setup Instructions
-
-### 1. Clone Repository
-
-
-git clone https://github.com/Ashi1314/terraform-aws-multi-env.git
-
-cd terraform-aws-multi-env
-
-
-### 2. Initialize Terraform
+```bash
 terraform init
+```
 
+### Deploy dev environment
 
-### 3. Run for Dev Environment
-terraform plan -var-file=environments/dev/terraform.tfvars
-terraform apply -var-file=environments/dev/terraform.tfvars
+```bash
+terraform workspace new dev
+terraform plan
+terraform apply
+```
 
+### Deploy prod environment
 
----
+```bash
+terraform workspace new prod
+terraform plan
+terraform apply
+```
 
-## 🌍 Multi-Environment Concept
+### Switch between workspaces
 
-- Each environment has its own `.tfvars` file  
-- Same modules are reused across all environments  
-- Ensures consistency and avoids duplication  
+```bash
+terraform workspace list
+terraform workspace select dev
+terraform output
+```
 
----
+### Destroy
 
-## 🔐 Remote State Setup (Recommended)
+```bash
+# Destroy current workspace's infra
+terraform destroy
 
-Use S3 + DynamoDB:
+# To destroy both environments
+terraform workspace select dev && terraform destroy -auto-approve
+terraform workspace select prod && terraform destroy -auto-approve
+```
 
-terraform {
-backend "s3" {
-bucket = "my-terraform-state"
-key = "dev/terraform.tfstate"
-region = "ap-south-1"
-dynamodb_table = "terraform-lock"
-}
-}
+## EC2 Details
 
-
----
-
-## 🔄 CI/CD Integration
-
-Supported tools:
-- GitHub Actions
-- Jenkins
-- AWS CodePipeline
-
-Workflow:
-1. Code push
-2. Terraform init
-3. Terraform plan
-4. Approval
-5. Terraform apply
-
----
-
-## 📊 Architecture Diagram
-
-Developer
-↓
-Terraform
-↓
-| AWS Infrastructure |
-
-↓ ↓ ↓
-Dev Staging Prod
-
-
-
----
-
-## 💡 Use Cases
-
-- Infrastructure automation
-- Multi-environment deployment
-- DevOps learning projects
-- Production-ready setups
-
----
-
-## 🧠 Learning Outcomes
-
-- Terraform modules
-- State management
-- Environment isolation
-- Real-world DevOps workflow
-
--------
+- **AMI**: `ami-0d76b909de1a0595d` (us-west-2)
+- **Instance Type**: `t3.micro`
+- **Root Volume**: 10 GB gp3
+- **Security Group**: Ports 22 (SSH) and 80 (HTTP) open inbound, all outbound allowed
